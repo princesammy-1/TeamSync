@@ -1,7 +1,14 @@
-export default function Card({ children, className = "" }) {
+import { cn } from "../../utils/cn";
+
+export default function Card({ children, className = "", padded = true, ...props }) {
   return (
     <div
-      className={`bg-slate-800 rounded-2xl border border-slate-700 p-6 ${className}`}
+      className={cn(
+        "rounded-xl border border-border bg-surface shadow-sm shadow-black/20",
+        padded && "p-5",
+        className,
+      )}
+      {...props}
     >
       {children}
     </div>

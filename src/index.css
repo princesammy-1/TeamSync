@@ -3,33 +3,92 @@
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
 @import "@fontsource/inter/700.css";
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Roboto", "Helvetica Neue", sans-serif;
+
+  /* Brand — violet/indigo */
+  --color-brand-50: #f2efff;
+  --color-brand-100: #e6e0ff;
+  --color-brand-200: #cec4ff;
+  --color-brand-300: #b09eff;
+  --color-brand-400: #9378fd;
+  --color-brand-500: #7a55f8;
+  --color-brand-600: #6b3ff0;
+  --color-brand-700: #5a2fd1;
+  --color-brand-800: #4826a8;
+  --color-brand-900: #3a2183;
+  --color-brand-950: #251256;
+
+  /* Surfaces */
+  --color-canvas: #0a0e1a;
+  --color-surface: #111726;
+  --color-surface-2: #161d30;
+  --color-elevated: #1b2238;
+  --color-border: #222b44;
+  --color-border-subtle: #1a2137;
+
+  /* Text */
+  --color-ink: #e9ebf5;
+  --color-ink-soft: #a0a7bd;
+  --color-ink-mute: #6e7690;
 }
 
-html,
-body,
-#root {
-  width: 100%;
-  height: 100%;
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-brand-500) 35%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
 }
 
-body {
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    "Roboto",
-    "Oxygen",
-    "Ubuntu",
-    "Cantarell",
-    "Fira Sans",
-    "Droid Sans",
-    "Helvetica Neue",
-    sans-serif;
-  background: #121212;
-  color: white;
+@layer utilities {
+  /* Slim dark scrollbars */
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-mute);
+  }
 }
