@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import { useMemo } from "react";
+import { MdAdminPanelSettings } from "react-icons/md";
 import { NAV_GROUPS } from "../../constants/navigation";
 import Logo from "../shared/Logo";
 import Badge from "../ui/Badge";
@@ -6,12 +8,29 @@ import { useWorkspace } from "../../hooks/useWorkspace";
 import { useAuth } from "../../hooks/useAuth";
 import { usePresence } from "../../hooks/usePresence";
 import UserMenu from "./UserMenu";
+import { can } from "../../constants/roles";
 import { cn } from "../../utils/cn";
 
 export default function Sidebar({ onNavigate }) {
   const { workspace } = useWorkspace();
   const { currentUser } = useAuth();
   const { presenceOf } = usePresence();
+  const showAdmin = currentUser && can(currentUser.role, "manageMembers");
+
+  const groups = useMemo(() => {
+    if (!showAdmin) return NAV_GROUPS;
+    return NAV_GROUPS.map((group) =>
+      group.label === "Account"
+        ? {
+            label: group.label,
+            items: [
+              ...group.items,
+              { title: "Admin", path: "/app/admin", icon: MdAdminPanelSettings },
+            ],
+          }
+        : group,
+    );
+  }, [showAdmin]);
 
   return (
     <div className="flex h-full w-64 flex-col border-r border-border-subtle bg-surface">
@@ -27,7 +46,7 @@ export default function Sidebar({ onNavigate }) {
       </div>
 
       <nav className="scrollbar-slim flex-1 space-y-5 overflow-y-auto px-3 py-2" aria-label="Primary">
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.label}>
             <p className="px-2 pb-1.5 text-[11px] font-semibold tracking-wider text-ink-mute uppercase">
               {group.label}

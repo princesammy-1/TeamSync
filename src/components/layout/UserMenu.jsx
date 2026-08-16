@@ -36,7 +36,10 @@ export default function UserMenu({ user, presence, onNavigate }) {
       align="left"
       className="min-w-56"
       trigger={
-        <button className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-surface-2">
+        <button
+          aria-label="Open user menu"
+          className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-surface-2"
+        >
           <Avatar name={user.name} size="md" presence={presence} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-ink">{user.name}</span>

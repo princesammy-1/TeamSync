@@ -1,4 +1,4 @@
-import { minutesAgo, hoursAgo, daysAgo } from "./helpers";
+import { minutesAgo, hoursAgo, daysAgo } from "./helpers.js";
 
 export const notifications = [
   {
@@ -6,7 +6,8 @@ export const notifications = [
     userId: "u1",
     type: "task",
     title: "Task assigned to you",
-    message: "Maya Chen assigned you 'Company offsite planning' in Product & Design.",
+    message:
+      "Maya Chen assigned you 'Company offsite planning' in Product & Design.",
     createdAt: hoursAgo(3),
     read: false,
     link: "/app/tasks",
@@ -26,7 +27,8 @@ export const notifications = [
     userId: "u1",
     type: "mention",
     title: "Mentioned in #general",
-    message: "Maya Chen mentioned you: \"The Q3 roadmap review is today at 11:00.\"",
+    message:
+      'Maya Chen mentioned you: "The Q3 roadmap review is today at 11:00."',
     createdAt: hoursAgo(5),
     read: false,
     link: "/app/chat",
@@ -46,7 +48,8 @@ export const notifications = [
     userId: "u1",
     type: "system",
     title: "Weekly digest",
-    message: "12 tasks completed across the workspace this week. Great momentum!",
+    message:
+      "12 tasks completed across the workspace this week. Great momentum!",
     createdAt: daysAgo(1),
     read: true,
     link: "/app/activity",

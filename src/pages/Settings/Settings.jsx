@@ -25,6 +25,7 @@ import { useWorkspace } from "../../hooks/useWorkspace";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { usePresence } from "../../hooks/usePresence";
+import { changePassword as apiChangePassword } from "../../services/authService";
 import { can, ROLE_LABELS, ROLE_DESCRIPTIONS, ROLES } from "../../constants/roles";
 import { relativeTime } from "../../utils/formatDate";
 import { cn } from "../../utils/cn";
@@ -429,11 +430,20 @@ function SecurityTab() {
       toast({ type: "error", title: "Passwords don't match" });
       return;
     }
+    if (!pwd.current) {
+      toast({ type: "error", title: "Current password required" });
+      return;
+    }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setSaving(false);
-    setPwd({ current: "", next: "", confirm: "" });
-    toast({ type: "success", title: "Password changed", message: "Your password was updated. Please use it next time you sign in." });
+    try {
+      await apiChangePassword(pwd.current, pwd.next);
+      setPwd({ current: "", next: "", confirm: "" });
+      toast({ type: "success", title: "Password changed", message: "Your password was updated. Other sessions have been signed out." });
+    } catch (err) {
+      toast({ type: "error", title: "Couldn't change password", message: err.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const sessions = useMemo(() => [

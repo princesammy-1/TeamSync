@@ -1,4 +1,4 @@
-import { minutesAgo, hoursAgo, daysAgo } from "./helpers";
+import { minutesAgo, hoursAgo, daysAgo } from "./helpers.js";
 
 export const activities = [
   {
@@ -37,7 +37,11 @@ export const activities = [
     id: "act-5",
     actorId: "u3",
     action: "meeting.scheduled",
-    target: { type: "meeting", name: "OAuth migration pairing session", id: "mtg-7" },
+    target: {
+      type: "meeting",
+      name: "OAuth migration pairing session",
+      id: "mtg-7",
+    },
     teamId: "t2",
     createdAt: hoursAgo(7),
   },
@@ -61,7 +65,11 @@ export const activities = [
     id: "act-8",
     actorId: "u2",
     action: "workspace.updated",
-    target: { type: "workspace", name: "Updated onboarding checklist", id: "ws1" },
+    target: {
+      type: "workspace",
+      name: "Updated onboarding checklist",
+      id: "ws1",
+    },
     teamId: null,
     createdAt: hoursAgo(10),
   },
@@ -109,7 +117,11 @@ export const activities = [
     id: "act-14",
     actorId: "u1",
     action: "workspace.created",
-    target: { type: "workspace", name: "Aurora Labs workspace created", id: "ws1" },
+    target: {
+      type: "workspace",
+      name: "Aurora Labs workspace created",
+      id: "ws1",
+    },
     teamId: null,
     createdAt: daysAgo(320),
   },

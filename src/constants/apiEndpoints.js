@@ -8,6 +8,9 @@ export const API_ENDPOINTS = {
     REGISTER: "/api/auth/register",
     LOGOUT: "/api/auth/logout",
     FORGOT_PASSWORD: "/api/auth/forgot-password",
+    RESET_PASSWORD: "/api/auth/reset-password",
+    CHANGE_PASSWORD: "/api/auth/change-password",
+    ACCEPT_INVITE: "/api/auth/accept-invite",
     ME: "/api/auth/me",
   },
   USERS: "/api/users",
@@ -24,6 +27,11 @@ export const API_ENDPOINTS = {
   ACTIVITIES: "/api/activities",
   SEARCH: "/api/search",
   WORKSPACE: "/api/workspace",
+  ADMIN: {
+    OVERVIEW: "/api/admin/overview",
+    USERS: "/api/admin/users",
+    ACTIVITY: "/api/admin/activity",
+  },
 };
 
 export const MOCK_LATENCY_MS = 220;

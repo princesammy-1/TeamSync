@@ -1,15 +1,15 @@
-import { store } from "./store";
-import { mockRequest } from "./mockApi";
+import { requestJson } from "./mockApi.js";
+import { API_ENDPOINTS } from "../constants/apiEndpoints.js";
 import { logActivity } from "./activityService";
 
 export function getWorkspace() {
-  return mockRequest(() => ({ ...store.workspace }), 150);
+  return requestJson(API_ENDPOINTS.WORKSPACE);
 }
 
 export async function updateWorkspace(actorId, patch) {
-  const ws = await mockRequest(() => {
-    store.workspace = { ...store.workspace, ...patch };
-    return { ...store.workspace };
+  const ws = await requestJson(API_ENDPOINTS.WORKSPACE, {
+    method: "PATCH",
+    body: patch,
   });
 
   await logActivity(actorId, "workspace.updated", {

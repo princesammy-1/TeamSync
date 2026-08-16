@@ -1,12 +1,12 @@
-import { users, DEMO_USER } from "./users";
-import { teams, workspace } from "./teams";
-import { tasks } from "./tasks";
-import { chatRooms, chatMessages } from "./chat";
-import { meetings } from "./meetings";
-import { events } from "./events";
-import { files } from "./files";
-import { notifications } from "./notifications";
-import { activities } from "./activities";
+import { users, DEMO_USER } from "./users.js";
+import { teams, workspace } from "./teams.js";
+import { tasks } from "./tasks.js";
+import { chatRooms, chatMessages } from "./chat.js";
+import { meetings } from "./meetings.js";
+import { events } from "./events.js";
+import { files } from "./files.js";
+import { notifications } from "./notifications.js";
+import { activities } from "./activities.js";
 
 export const seedData = {
   workspace,
@@ -22,4 +22,17 @@ export const seedData = {
   activities,
 };
 
-export { users, DEMO_USER, teams, workspace, tasks, chatRooms, chatMessages, meetings, events, files, notifications, activities };
+export {
+  users,
+  DEMO_USER,
+  teams,
+  workspace,
+  tasks,
+  chatRooms,
+  chatMessages,
+  meetings,
+  events,
+  files,
+  notifications,
+  activities,
+};

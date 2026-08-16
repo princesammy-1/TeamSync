@@ -1,9 +1,7 @@
 import { store, session } from "./store";
-import { mockRequest, ApiError } from "./mockApi";
-import { generateId } from "../utils/generateId";
+import { ApiError, getSessionToken, requestJson, setSessionToken } from "./mockApi.js";
 import { validateEmail } from "../utils/validateEmail";
-import { logActivity } from "./activityService";
-import { ROLES } from "../constants/roles";
+import { API_ENDPOINTS } from "../constants/apiEndpoints.js";
 
 const SESSION_KEY = "teamsync.session";
 
@@ -14,106 +12,99 @@ function sanitize(user) {
 }
 
 export async function login(email, password) {
-  return mockRequest(() => {
-    const user = store.users.find(
-      (u) => u.email.toLowerCase() === String(email).toLowerCase().trim(),
-    );
+  const payload = await requestJson(API_ENDPOINTS.AUTH.LOGIN, {
+    method: "POST",
+    body: { email, password },
+  });
 
-    if (!user || user.password !== password) {
-      throw new ApiError("Invalid email or password.", 401);
-    }
+  const user = sanitize(payload.user ?? payload);
+  if (payload.token) setSessionToken(payload.token);
+  session.userId = user?.id ?? null;
+  if (user?.id) localStorage.setItem(SESSION_KEY, user.id);
 
-    session.userId = user.id;
-    localStorage.setItem(SESSION_KEY, user.id);
-    logActivity(user.id, "login", {
-      type: "session",
-      name: `${user.name} signed in`,
-      id: user.id,
-    });
-
-    return sanitize(user);
-  }, 400);
+  return user;
 }
 
 export async function register(name, email, password) {
-  return mockRequest(() => {
-    const cleanEmail = String(email).toLowerCase().trim();
-    if (!name || name.trim().length < 2) {
-      throw new ApiError("Please enter your full name.");
-    }
-    if (!validateEmail(cleanEmail)) {
-      throw new ApiError("Please enter a valid email address.");
-    }
-    if (String(password).length < 8) {
-      throw new ApiError("Password must be at least 8 characters.");
-    }
-    if (store.users.some((u) => u.email.toLowerCase() === cleanEmail)) {
-      throw new ApiError("An account with this email already exists.", 409);
-    }
+  const payload = await requestJson(API_ENDPOINTS.AUTH.REGISTER, {
+    method: "POST",
+    body: { name, email, password },
+  });
 
-    const user = {
-      id: generateId("u"),
-      name: name.trim(),
-      email: cleanEmail,
-      password,
-      role: ROLES.MEMBER,
-      title: "New member",
-      bio: "",
-      location: "",
-      presence: "online",
-      statusMessage: null,
-      joinedAt: new Date().toISOString(),
-    };
+  const user = sanitize(payload.user ?? payload);
+  if (payload.token) setSessionToken(payload.token);
+  session.userId = user?.id ?? null;
+  if (user?.id) localStorage.setItem(SESSION_KEY, user.id);
 
-    store.users.push(user);
-    session.userId = user.id;
-    localStorage.setItem(SESSION_KEY, user.id);
-
-    logActivity(user.id, "member.joined", {
-      type: "member",
-      name: `${user.name} joined the workspace`,
-      id: user.id,
-    });
-
-    return sanitize(user);
-  }, 500);
+  return user;
 }
 
 export async function logout() {
-  return mockRequest(() => {
-    const me = store.users.find((u) => u.id === session.userId);
+  try {
+    const result = await requestJson(API_ENDPOINTS.AUTH.LOGOUT, {
+      method: "POST",
+    });
+    return result?.ok ?? true;
+  } finally {
+    setSessionToken(null);
     session.userId = null;
     localStorage.removeItem(SESSION_KEY);
-    if (me) {
-      logActivity(me.id, "logout", {
-        type: "session",
-        name: `${me.name} signed out`,
-        id: me.id,
-      });
-    }
-    return true;
-  }, 150);
+  }
 }
 
 export async function forgotPassword(email) {
-  return mockRequest(() => {
-    if (!validateEmail(email)) {
-      throw new ApiError("Please enter a valid email address.");
-    }
-    const exists = store.users.some(
-      (u) => u.email.toLowerCase() === String(email).toLowerCase().trim(),
-    );
-    if (!exists) {
-      throw new ApiError("No account found with this email.", 404);
-    }
-    return { ok: true };
-  }, 600);
+  if (!validateEmail(email)) {
+    throw new ApiError("Please enter a valid email address.");
+  }
+
+  return requestJson(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+    method: "POST",
+    body: { email },
+  });
 }
 
-export function getCurrentUser() {
-  if (!session.userId) return null;
-  const me = store.users.find((u) => u.id === session.userId);
-  return sanitize(me);
+export async function resetPassword(token, password) {
+  return requestJson(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+    method: "POST",
+    body: { token, password },
+  });
+}
+
+export async function acceptInvite(token, password, name) {
+  const payload = await requestJson(API_ENDPOINTS.AUTH.ACCEPT_INVITE, {
+    method: "POST",
+    body: { token, password, name },
+  });
+
+  const user = sanitize(payload.user ?? payload);
+  if (payload.token) setSessionToken(payload.token);
+  session.userId = user?.id ?? null;
+  if (user?.id) localStorage.setItem(SESSION_KEY, user.id);
+
+  return user;
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const payload = await requestJson(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+    method: "POST",
+    body: { currentPassword, newPassword },
+  });
+  if (payload?.token) setSessionToken(payload.token);
+  return payload;
+}
+
+export async function getCurrentUser() {
+  const savedId = localStorage.getItem(SESSION_KEY) || session.userId;
+  if (!savedId && !getSessionToken()) return null;
+
+  try {
+    const payload = await requestJson(API_ENDPOINTS.AUTH.ME);
+    return sanitize(payload.user ?? payload);
+  } catch {
+    if (!savedId) return null;
+    const me = store.users.find((user) => user.id === savedId);
+    return sanitize(me);
+  }
 }
 
 export function setCurrentUserId(userId) {

@@ -1,5 +1,6 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { can } from "../constants/roles";
 
 function FullPageLoader() {
   return (
@@ -25,5 +26,17 @@ export function PublicOnlyRoute() {
 
   if (loading) return <FullPageLoader />;
   if (currentUser) return <Navigate to="/app" replace />;
+  return <Outlet />;
+}
+
+export function AdminRoute() {
+  const { currentUser, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <FullPageLoader />;
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (!can(currentUser.role, "manageMembers")) {
+    return <Navigate to="/app" replace state={{ from: location.pathname }} />;
+  }
   return <Outlet />;
 }

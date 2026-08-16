@@ -1,4 +1,4 @@
-import { daysFromNow, daysAgo } from "./helpers";
+import { daysFromNow, daysAgo } from "./helpers.js";
 
 export const meetings = [
   {

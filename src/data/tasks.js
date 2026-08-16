@@ -1,11 +1,12 @@
-import { TASK_STATUS, TASK_PRIORITY } from "../constants/tasks";
-import { daysFromNow, daysAgo } from "./helpers";
+import { TASK_STATUS, TASK_PRIORITY } from "../constants/tasks.js";
+import { daysFromNow, daysAgo } from "./helpers.js";
 
 export const tasks = [
   {
     id: "task-1",
     title: "Revamp onboarding flow for new team members",
-    description: "Reduce time-to-first-task from 3 days to under 1 hour with guided setup.",
+    description:
+      "Reduce time-to-first-task from 3 days to under 1 hour with guided setup.",
     status: TASK_STATUS.IN_PROGRESS,
     priority: TASK_PRIORITY.HIGH,
     teamId: "t1",
@@ -178,7 +179,8 @@ export const tasks = [
   {
     id: "task-15",
     title: "Churn interview deep-dive",
-    description: "Cluster cancellation reasons and propose retention experiments.",
+    description:
+      "Cluster cancellation reasons and propose retention experiments.",
     status: TASK_STATUS.TODO,
     priority: TASK_PRIORITY.HIGH,
     teamId: "t4",
@@ -264,7 +266,8 @@ export const tasks = [
   {
     id: "task-22",
     title: "Company offsite planning",
-    description: "Venue, agenda, and travel logistics for the September offsite.",
+    description:
+      "Venue, agenda, and travel logistics for the September offsite.",
     status: TASK_STATUS.TODO,
     priority: TASK_PRIORITY.MEDIUM,
     teamId: "t1",

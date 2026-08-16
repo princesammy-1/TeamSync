@@ -1,4 +1,4 @@
-import { hoursAgo, daysAgo } from "./helpers";
+import { hoursAgo, daysAgo } from "./helpers.js";
 
 export const chatRooms = [
   {

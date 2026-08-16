@@ -1,4 +1,4 @@
-import { daysAgo } from "./helpers";
+import { daysAgo } from "./helpers.js";
 
 export const workspace = {
   id: "ws1",

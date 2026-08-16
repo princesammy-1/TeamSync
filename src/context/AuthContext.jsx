@@ -1,5 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import * as authService from "../services/authService";
 
 export const AuthContext = createContext(null);
@@ -9,12 +15,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const init = () => {
-      const user = authService.getCurrentUser();
+    const init = async () => {
+      const user = await authService.getCurrentUser();
       setCurrentUser(user);
       setLoading(false);
     };
-    const timer = window.setTimeout(init, 350);
+    const timer = window.setTimeout(() => {
+      void init();
+    }, 350);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -53,7 +61,15 @@ export function AuthProvider({ children }) {
       forgotPassword,
       updateCurrentUser,
     }),
-    [currentUser, loading, login, register, logout, forgotPassword, updateCurrentUser],
+    [
+      currentUser,
+      loading,
+      login,
+      register,
+      logout,
+      forgotPassword,
+      updateCurrentUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

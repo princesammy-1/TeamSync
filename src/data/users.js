@@ -1,5 +1,5 @@
-import { ROLES } from "../constants/roles";
-import { daysAgo } from "./helpers";
+import { ROLES } from "../constants/roles.js";
+import { daysAgo } from "./helpers.js";
 
 export const DEMO_USER = {
   id: "u1",

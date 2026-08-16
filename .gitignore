@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+
+# Vercel local link metadata
+.vercel
+
+# Local server data
+server/.data
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +31,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+test-results/
+playwright-report/
