@@ -2,7 +2,7 @@
 
 TeamSync is deployed as two services:
 
-- **API** (Express + SQLite persistence) — deployed on **Render**.
+- **API** (Express + Postgres persistence) — deployed on **Render**.
 - **Frontend** (Vite static build) — deployed on **Vercel**.
 
 `render.yaml` and `vercel.json` in the repo root drive both. The E2E suite
@@ -28,19 +28,20 @@ flows in CI or locally.
    > The API **refuses to start** in production without `SESSION_SECRET`
    > (fail-fast, see `server/auth.js`).
 
-4. Render provisions a 1 GB persistent disk mounted at `/var/data/teamsync`
-   where the SQLite database lives, so registrations and invite/reset tokens
-   survive restarts and redeploys.
+4. Render provisions a free managed **Postgres** database (`teamsync-db`) and
+   injects its connection string as `DATABASE_URL`. The API persists users/auth
+   records there (`TEAMSYNC_USE_POSTGRES=true`), so registrations and
+   invite/reset tokens survive restarts and redeploys. No persistent disk is
+   needed — this keeps the service on the free plan.
 
-### Daily backups
+### Backups
 
-Render cron jobs **cannot access a service's persistent disk**, so the API arms a
-daily in-process backup instead: when `TEAMSYNC_PERSIST=true`, `server/index.js`
-snapshots the SQLite database at 02:00 UTC via `runBackup()` (`server/backup.js`).
-Snapshots land in `TEAMSYNC_BACKUP_DIR` (on the persistent disk), keeping the
-newest `TEAMSYNC_BACKUP_KEEP` (14). See [`docs/DISASTER_RECOVERY.md`](./DISASTER_RECOVERY.md).
-Copy that directory off-site (S3/B2) for durability. You can also trigger a
-one-shot backup with `npm run backup` from a Render shell.
+The managed Postgres owns the durable copy of auth records, so no in-process
+file backups run in production. The SQLite/JSON local paths still support
+`npm run backup` (see [`docs/DISASTER_RECOVERY.md`](./DISASTER_RECOVERY.md));
+in Postgres mode the command logs a notice to rely on the provider's backups.
+Export data manually with `pg_dump` against `DATABASE_URL` if you need a
+snapshot before the provider's next backup window.
 
 ## 2. Deploy the frontend to Vercel
 
@@ -73,8 +74,9 @@ After both deploys:
 - Trigger a failed request and confirm `LOG_LEVEL` output appears in Render logs
   and, if configured, `ERROR_REPORTING_URL` receives the error.
 
-## 4. Moving to a managed database
+## 4. Scaling beyond a single instance
 
-The in-process SQLite store is single-instance. Before scaling to multiple API
-instances, migrate to managed Postgres. The plan and schema are documented in
-[`docs/DATABASE.md`](./DATABASE.md).
+The API keeps the full store in memory and persists only users/auth to Postgres,
+so it is single-instance today. Before scaling to multiple API replicas, migrate
+the remaining collections (tasks, chat, meetings, files) to Postgres. The plan
+and schema are documented in [`docs/DATABASE.md`](./DATABASE.md).

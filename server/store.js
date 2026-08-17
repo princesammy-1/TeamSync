@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
+import pg from "pg";
 import bcrypt from "bcryptjs";
 import { seedData } from "../src/data/index.js";
 
@@ -71,6 +72,106 @@ function withSqliteDatabase(callback) {
   }
 }
 
+export function isPostgresPersistenceEnabled() {
+  return (
+    process.env.TEAMSYNC_USE_POSTGRES === "true" &&
+    Boolean(process.env.DATABASE_URL)
+  );
+}
+
+let pgPool = null;
+let pgWriteQueue = Promise.resolve();
+
+function pgSslConfig(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    const mode = String(url.searchParams.get("sslmode") ?? "").toLowerCase();
+    if (mode === "disable") return undefined;
+  } catch {
+    // Invalid URL — fall through to a safe default.
+  }
+  return { rejectUnauthorized: false };
+}
+
+function getPgPool() {
+  if (!pgPool) {
+    pgPool = new pg.Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: pgSslConfig(process.env.DATABASE_URL),
+      max: 10,
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 30_000,
+    });
+    pgPool.on("error", (error) => {
+      // eslint-disable-next-line no-console
+      console.error("[postgres] idle client error:", error.message);
+    });
+  }
+  return pgPool;
+}
+
+export async function ensurePgSchema() {
+  if (!isPostgresPersistenceEnabled()) return;
+  await getPgPool().query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      payload JSONB NOT NULL
+    )
+  `);
+}
+
+export async function loadPersistedUsersFromPostgres() {
+  if (!isPostgresPersistenceEnabled()) return [];
+  await ensurePgSchema();
+  const { rows } = await getPgPool().query(
+    "SELECT payload FROM users ORDER BY id",
+  );
+  return rows.map((row) => row.payload);
+}
+
+export async function closePgPool() {
+  if (pgPool) {
+    const pool = pgPool;
+    pgPool = null;
+    pgWriteQueue = Promise.resolve();
+    await pool.end();
+  }
+}
+
+/**
+ * Postgres facade over the existing saveUsers funnel. Call sites in the API
+ * stay synchronous; writes are serialized through a queue and errors are
+ * logged rather than thrown so the API never crashes on a failed write.
+ */
+export function saveUsersPostgres(users) {
+  const pool = getPgPool();
+  pgWriteQueue = pgWriteQueue.then(async () => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("DELETE FROM users");
+      for (const user of users) {
+        await client.query(
+          "INSERT INTO users (id, payload) VALUES ($1, $2::jsonb)",
+          [user.id, JSON.stringify(user)],
+        );
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // client may already be broken
+      }
+      // eslint-disable-next-line no-console
+      console.error("[postgres] saveUsers failed:", error.message);
+    } finally {
+      client.release();
+    }
+  });
+  return pgWriteQueue;
+}
+
 export function cloneData(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -103,6 +204,10 @@ export function saveUsers(storeOrUsers) {
     ? storeOrUsers
     : storeOrUsers.users;
 
+  if (isPostgresPersistenceEnabled()) {
+    return saveUsersPostgres(users);
+  }
+
   if (isSqlitePersistenceEnabled()) {
     withSqliteDatabase((db) => {
       const insert = db.prepare(
@@ -123,11 +228,11 @@ export function saveUsers(storeOrUsers) {
   writeFileSync(file, JSON.stringify(users, null, 2));
 }
 
-export function createStore({ persist = false } = {}) {
+export function createStore({ persist = false, persistedUsers = null } = {}) {
   const users = cloneData(seedData.users);
 
   if (persist) {
-    const persisted = loadPersistedUsers();
+    const persisted = persistedUsers ?? loadPersistedUsers();
     if (persisted.length) {
       const byEmail = new Map(
         users.concat(persisted).map((user) => [user.email, user]),

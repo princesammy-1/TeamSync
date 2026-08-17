@@ -84,6 +84,13 @@ export function runBackup() {
   const dir = backupDirectory();
   mkdirSync(dir, { recursive: true });
 
+  if (process.env.TEAMSYNC_USE_POSTGRES === "true") {
+    logger.warn(
+      "Postgres mode: local file backups are disabled; rely on the managed database provider's backups",
+    );
+    return { ok: true, reason: "postgres-managed" };
+  }
+
   const useSqlite = process.env.TEAMSYNC_USE_SQLITE === "true";
   const keep = Number(process.env.TEAMSYNC_BACKUP_KEEP) || 14;
 

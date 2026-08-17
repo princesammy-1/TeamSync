@@ -4,16 +4,20 @@
 
 TeamSync runs a **single-instance, in-process store**. All collections are
 loaded from seed data (`src/data/index.js`) into memory at boot. Only **users /
-auth records** are persisted, in one of two modes:
+auth records** are persisted, in one of three modes (checked in this order):
 
 | Mode | Backing store | Env vars |
 | --- | --- | --- |
+| Postgres (production) | Managed Postgres (`users` table, JSONB payload) | `TEAMSYNC_USE_POSTGRES=true`, `DATABASE_URL` |
+| SQLite (local/tests) | `server/.data/teamsync.db` via `node:sqlite` | `TEAMSYNC_USE_SQLITE=true`, `TEAMSYNC_DATABASE_PATH` |
 | JSON (default) | `server/.data/users.json` | `TEAMSYNC_DATA_FILE` |
-| SQLite | `server/.data/teamsync.db` via `node:sqlite` | `TEAMSYNC_USE_SQLITE=true`, `TEAMSYNC_DATABASE_PATH` |
 
-Persistence writes happen through `saveUsers(store)` and reads via
-`loadPersistedUsers()` in `server/store.js`. The store object is created by
-`createStore()` and exposes plain arrays:
+`saveUsers(store)` is the single write funnel in all three modes; for Postgres
+it is a fire-and-forget facade over a connection pool (see `server/store.js`),
+so the call sites in `server/index.js` need no changes. Reads happen once at
+boot via `loadPersistedUsersFromPostgres()` when Postgres is enabled.
+
+The store object is created by `createStore()` and exposes plain arrays:
 
 ```
 workspace, users, teams, tasks, chatRooms, chatMessages,

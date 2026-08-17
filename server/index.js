@@ -13,6 +13,9 @@ import {
   saveUsers,
   hashPassword,
   verifyPassword,
+  ensurePgSchema,
+  loadPersistedUsersFromPostgres,
+  isPostgresPersistenceEnabled,
 } from "./store.js";
 import {
   requireAuth,
@@ -81,10 +84,10 @@ function createRateLimiter(windowMs = 60_000, maxRequests = 90) {
   };
 }
 
-export function createApp({ persist = false } = {}) {
+export function createApp({ persist = false, persistedUsers = null } = {}) {
   const app = express();
   const logger = createLogger();
-  const store = createStore({ persist });
+  const store = createStore({ persist, persistedUsers });
   const allowedOrigins = parseAllowedOrigins();
   const rateLimiter = createRateLimiter();
   const emailRateLimiter = createEmailRateLimiter();
@@ -1082,12 +1085,31 @@ if (isDirectRun) {
   const port = Number(process.env.PORT || process.env.TEAMSYNC_PORT || 3001);
   const persist = process.env.TEAMSYNC_PERSIST === "true";
   const logger = createLogger();
-  const app = createApp({ persist });
-  app.listen(port, () => {
-    logger.info("TeamSync API running", { port });
+
+  (async () => {
+    let persistedUsers = null;
+    if (persist && isPostgresPersistenceEnabled()) {
+      await ensurePgSchema();
+      persistedUsers = await loadPersistedUsersFromPostgres();
+    }
+
+    const app = createApp({ persist, persistedUsers });
+    app.listen(port, () => {
+      logger.info("TeamSync API running", {
+        port,
+        storage: isPostgresPersistenceEnabled()
+          ? "postgres"
+          : "sqlite",
+      });
+    });
+
+    if (persist && !isPostgresPersistenceEnabled()) {
+      scheduleBackups({ logger });
+      logger.info("Daily backup scheduler armed", { hourUtc: 2 });
+    }
+  })().catch((error) => {
+    logger.error("Failed to start TeamSync API", { error: error.message });
+    // eslint-disable-next-line no-process-exit
+    process.exit(1);
   });
-  if (persist) {
-    scheduleBackups({ logger });
-    logger.info("Daily backup scheduler armed", { hourUtc: 2 });
-  }
 }
