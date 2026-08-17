@@ -34,6 +34,7 @@ import {
   createEmailRateLimiter,
 } from "./email.js";
 import { createLogger } from "./logger.js";
+import { scheduleBackups } from "./backup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const isDirectRun = process.argv[1]
@@ -1079,9 +1080,14 @@ export function createApp({ persist = false } = {}) {
 
 if (isDirectRun) {
   const port = Number(process.env.PORT || process.env.TEAMSYNC_PORT || 3001);
+  const persist = process.env.TEAMSYNC_PERSIST === "true";
   const logger = createLogger();
-  const app = createApp({ persist: process.env.TEAMSYNC_PERSIST === "true" });
+  const app = createApp({ persist });
   app.listen(port, () => {
     logger.info("TeamSync API running", { port });
   });
+  if (persist) {
+    scheduleBackups({ logger });
+    logger.info("Daily backup scheduler armed", { hourUtc: 2 });
+  }
 }

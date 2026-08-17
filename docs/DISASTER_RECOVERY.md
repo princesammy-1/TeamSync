@@ -36,7 +36,11 @@ Old snapshots are pruned automatically; keep the newest
 
 ### Scheduling
 
-Recommended cron (daily, 02:00 UTC). Logs go to the app's JSON logger.
+- **On Render**: the API arms a daily in-process backup automatically when
+  `TEAMSYNC_PERSIST=true` (see `docs/DEPLOYMENT.md`). Render cron jobs cannot
+  access the service's persistent disk, so no external cron is needed.
+- **Self-hosted**: recommended cron (daily, 02:00 UTC). Logs go to the app's
+  JSON logger.
 
 ```
 0 2 * * * cd /path/to/teamsync && node server/backup.js >> /var/log/teamsync-backup.log 2>&1

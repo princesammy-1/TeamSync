@@ -6,11 +6,10 @@ services:
     region: oregon
     buildCommand: npm install
     startCommand: npm run start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3001
       - key: TEAMSYNC_PORT
         value: 3001
       - key: TEAMSYNC_ALLOWED_ORIGINS
@@ -21,6 +20,10 @@ services:
         value: true
       - key: TEAMSYNC_DATABASE_PATH
         value: /var/data/teamsync/teamsync.db
+      - key: TEAMSYNC_DATA_FILE
+        value: /var/data/teamsync/users.json
+      - key: TEAMSYNC_BACKUP_DIR
+        value: /var/data/teamsync/backups
       - key: SESSION_SECRET
         sync: false
       - key: LOG_LEVEL
@@ -64,8 +67,3 @@ databases:
     region: oregon
     databaseName: teamsync
     user: teamsync
-
-cron:
-  - name: teamsync-backup
-    schedule: "0 2 * * *"
-    command: node server/backup.js

@@ -136,6 +136,52 @@ const isDirectRun = process.argv[1]
   ? resolve(process.argv[1]) === fileURLToPath(import.meta.url)
   : false;
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Milliseconds until the next scheduled backup hour (UTC). Used to arm the
+ * in-process backup timer. Returns 0 when `now` is exactly the target hour.
+ */
+export function nextBackupDelayMs(hourUtc = 2, now = new Date()) {
+  const next = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      hourUtc,
+      0,
+      0,
+      0,
+    ),
+  );
+  if (next.getTime() < now.getTime()) {
+    next.setTime(next.getTime() + MS_PER_DAY);
+  }
+  return next.getTime() - now.getTime();
+}
+
+/**
+ * Arm a daily backup that runs inside the service process. Render cron jobs
+ * cannot access a service's persistent disk, so on Render this is the only
+ * way to snapshot the SQLite database on the mounted disk. Returns a function
+ * that stops the schedule (useful in tests).
+ */
+export function scheduleBackups({ hourUtc = 2, log = logger } = {}) {
+  let timer;
+  function arm() {
+    timer = setTimeout(() => {
+      try {
+        runBackup();
+      } catch (error) {
+        log.error("Scheduled backup failed", { error: error.message });
+      }
+      arm();
+    }, nextBackupDelayMs(hourUtc));
+  }
+  arm();
+  return () => clearTimeout(timer);
+}
+
 if (isDirectRun) {
   const result = runBackup();
   if (!result.ok) {

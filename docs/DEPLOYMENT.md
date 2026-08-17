@@ -13,7 +13,7 @@ flows in CI or locally.
 
 1. Push the repo to GitHub.
 2. In Render, **New → Blueprint**, select the repo. Render reads `render.yaml`
-   and creates the web service plus a scheduled cron job.
+   and creates the web service plus the Postgres database.
 3. Set the `sync: false` env vars (Render marks them for manual entry):
 
    | Var | Value |
@@ -32,12 +32,15 @@ flows in CI or locally.
    where the SQLite database lives, so registrations and invite/reset tokens
    survive restarts and redeploys.
 
-### Backup cron
+### Daily backups
 
-`render.yaml` schedules `node server/backup.js` daily at 02:00 UTC. Snapshots
-land in `/var/data/teamsync/backups` (14 kept). See
-[`docs/DISASTER_RECOVERY.md`](./DISASTER_RECOVERY.md). Copy that directory
-off-site (S3/B2) for durability.
+Render cron jobs **cannot access a service's persistent disk**, so the API arms a
+daily in-process backup instead: when `TEAMSYNC_PERSIST=true`, `server/index.js`
+snapshots the SQLite database at 02:00 UTC via `runBackup()` (`server/backup.js`).
+Snapshots land in `TEAMSYNC_BACKUP_DIR` (on the persistent disk), keeping the
+newest `TEAMSYNC_BACKUP_KEEP` (14). See [`docs/DISASTER_RECOVERY.md`](./DISASTER_RECOVERY.md).
+Copy that directory off-site (S3/B2) for durability. You can also trigger a
+one-shot backup with `npm run backup` from a Render shell.
 
 ## 2. Deploy the frontend to Vercel
 
