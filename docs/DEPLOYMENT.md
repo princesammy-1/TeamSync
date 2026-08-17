@@ -29,10 +29,11 @@ flows in CI or locally.
    > (fail-fast, see `server/auth.js`).
 
 4. Render provisions a free managed **Postgres** database (`teamsync-db`) and
-   injects its connection string as `DATABASE_URL`. The API persists users/auth
-   records there (`TEAMSYNC_USE_POSTGRES=true`), so registrations and
-   invite/reset tokens survive restarts and redeploys. No persistent disk is
-   needed — this keeps the service on the free plan.
+   injects its connection string as `DATABASE_URL`. The API detects Postgres
+   from `DATABASE_URL` (`TEAMSYNC_USE_SQLITE=false`) and persists users/auth
+   records there, so registrations and invite/reset tokens survive restarts
+   and redeploys. No persistent disk is needed — this keeps the service on the
+   free plan.
 
 ### Backups
 

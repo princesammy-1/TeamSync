@@ -8,7 +8,7 @@ auth records** are persisted, in one of three modes (checked in this order):
 
 | Mode | Backing store | Env vars |
 | --- | --- | --- |
-| Postgres (production) | Managed Postgres (`users` table, JSONB payload) | `TEAMSYNC_USE_POSTGRES=true`, `DATABASE_URL` |
+| Postgres (production) | Managed Postgres (`users` table, JSONB payload) | `DATABASE_URL` (auto-selected unless `TEAMSYNC_USE_SQLITE=true`; `TEAMSYNC_USE_POSTGRES=true` also forces it) |
 | SQLite (local/tests) | `server/.data/teamsync.db` via `node:sqlite` | `TEAMSYNC_USE_SQLITE=true`, `TEAMSYNC_DATABASE_PATH` |
 | JSON (default) | `server/.data/users.json` | `TEAMSYNC_DATA_FILE` |
 

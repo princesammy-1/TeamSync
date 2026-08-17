@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
 import { createLogger } from "./logger.js";
+import { isPostgresPersistenceEnabled } from "./store.js";
 
 const logger = createLogger();
 
@@ -84,7 +85,7 @@ export function runBackup() {
   const dir = backupDirectory();
   mkdirSync(dir, { recursive: true });
 
-  if (process.env.TEAMSYNC_USE_POSTGRES === "true") {
+  if (isPostgresPersistenceEnabled()) {
     logger.warn(
       "Postgres mode: local file backups are disabled; rely on the managed database provider's backups",
     );

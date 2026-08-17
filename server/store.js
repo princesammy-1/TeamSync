@@ -73,10 +73,10 @@ function withSqliteDatabase(callback) {
 }
 
 export function isPostgresPersistenceEnabled() {
-  return (
-    process.env.TEAMSYNC_USE_POSTGRES === "true" &&
-    Boolean(process.env.DATABASE_URL)
-  );
+  if (!process.env.DATABASE_URL) return false;
+  const explicitPostgres = process.env.TEAMSYNC_USE_POSTGRES === "true";
+  const sqliteExplicitlyChosen = process.env.TEAMSYNC_USE_SQLITE === "true";
+  return explicitPostgres || !sqliteExplicitlyChosen;
 }
 
 let pgPool = null;
